@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>XXX科技 · 目录书架（移动端）</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f2547;--navy-mid:#1a3a6e;--gold:#c8a84b;--pink:#ff4d8f;--white:#fff;--text-1:#0d1b2e;--text-2:#4a5568;--text-3:#94a3b8;--border:#e2e8f0;--surface:#f1f4f8;--red:#e03e3e;--green:#0a8a47}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--surface);color:var(--text-1);min-height:100vh;max-width:390px;margin:0 auto;position:relative;overflow-x:hidden}
+
+/* STATUS BAR mockup */
+.status-bar{height:44px;background:var(--navy);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;font-size:12px;font-weight:600;color:#fff}
+.status-time{font-size:15px;font-weight:700}
+.status-icons{display:flex;align-items:center;gap:5px;font-size:11px}
+
+/* HEADER */
+.app-header{background:var(--navy);padding:12px 16px 16px;position:sticky;top:0;z-index:50}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.logo-wrap{display:flex;align-items:center;gap:8px}
+.logo-mark{width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:17px;height:17px}
+.logo-name{font-size:14px;font-weight:700;color:#fff}
+.logo-sub{font-size:10px;color:rgba(255,255,255,.5)}
+.header-avatar{width:32px;height:32px;border-radius:50%;background:var(--navy-mid);border:2px solid var(--gold);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.search-bar{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:9px 14px}
+.search-bar input{border:none;background:transparent;font-size:14px;color:#fff;outline:none;flex:1;font-family:inherit}
+.search-bar input::placeholder{color:rgba(255,255,255,.4)}
+
+/* TABS */
+.tabs-wrap{background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto;display:flex;scrollbar-width:none}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:13px 16px;font-size:13px;color:var(--text-3);white-space:nowrap;border-bottom:2.5px solid transparent;transition:all .15s;cursor:pointer}
+.tab.active{color:var(--navy-mid);border-bottom-color:var(--navy-mid);font-weight:600}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#1e4a8a 100%);padding:18px 16px;margin-bottom:0}
+.hero h2{font-size:17px;font-weight:700;color:#fff;margin-bottom:4px}
+.hero p{font-size:12px;color:rgba(255,255,255,.6);line-height:1.6}
+.hero-stats{display:flex;gap:0;margin-top:14px}
+.hero-stat{flex:1;text-align:center;border-right:1px solid rgba(255,255,255,.12)}
+.hero-stat:last-child{border-right:none}
+.hero-stat-num{font-size:18px;font-weight:700;color:var(--gold)}
+.hero-stat-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px}
+
+/* BODY */
+.body{padding:16px}
+.section-label{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* CATALOG LIST (mobile: vertical card list) */
+.catalog-list{display:flex;flex-direction:column;gap:12px;margin-bottom:24px}
+
+.cat-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;cursor:pointer;transition:box-shadow .15s;position:relative;active:opacity:.9}
+.cat-card:active{opacity:.92}
+.cat-cover{width:88px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:10px 6px}
+.cov-navy{background:var(--navy)}
+.cov-gold{background:linear-gradient(135deg,#7a5c00,#c8901a)}
+.cov-slate{background:#2c3e50}
+.cov-steel{background:#1c4a6e}
+.cov-moss{background:#2d5016}
+.cov-brick{background:#5c1a1a}
+.cov-label{font-size:18px;font-weight:800;color:rgba(255,255,255,.9);letter-spacing:1px}
+.cov-sub{font-size:8px;color:rgba(255,255,255,.45);margin-top:2px;text-align:center}
+.cov-badge{position:absolute;top:6px;right:4px;font-size:9px;padding:2px 5px;border-radius:8px;font-weight:600}
+.badge-new{background:var(--red);color:#fff}
+.badge-hot{background:var(--gold);color:#3d2d00}
+.badge-ok{background:var(--green);color:#fff}
+
+.cat-info{flex:1;padding:12px 14px 12px 12px;display:flex;flex-direction:column;justify-content:space-between;min-width:0}
+.cat-name{font-size:13px;font-weight:600;color:var(--text-1);line-height:1.4;margin-bottom:4px}
+.cat-meta{font-size:11px;color:var(--text-3);display:flex;gap:8px;margin-bottom:8px}
+.cat-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.cat-tag{font-size:10px;padding:2px 7px;border-radius:8px;background:#eef3fb;color:var(--navy-mid);font-weight:500}
+.cat-footer{display:flex;align-items:center;justify-content:space-between}
+.btn-read-m{font-size:12px;font-weight:600;color:var(--navy-mid);background:#eef3fb;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-read-m:active{background:#dce8fb}
+.star-m{font-size:18px;color:var(--border);cursor:pointer;padding:4px}
+.star-m.saved{color:var(--gold)}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;max-width:390px;margin:0 auto;background:var(--white);border-top:1px solid var(--border);display:flex;height:56px;box-shadow:0 -2px 8px rgba(0,0,0,.06);z-index:100}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--text-3);transition:color .15s;font-size:9.5px}
+.bnav-item.active{color:var(--navy-mid)}
+.bnav-icon{font-size:20px;line-height:1}
+.bnav-badge{position:relative}
+.bnav-badge::after{content:'';position:absolute;top:0;right:-2px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1.5px solid var(--white)}
+
+.body-pad{padding-bottom:72px}
+</style>
+</head>
+<body>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <div class="status-time">9:41</div>
+  <div class="status-icons">
+    <span>●●●</span>
+    <span>WiFi</span>
+    <span>🔋</span>
+  </div>
+</div>
+
+<!-- App Header -->
+<div class="app-header">
+  <div class="header-row">
+    <div class="logo-wrap">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0f2547" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">XXX科技目录</div>
+        <div class="logo-sub">MechCo Digital Catalog</div>
+      </div>
+    </div>
+    <div class="header-avatar">李</div>
+  </div>
+  <div class="search-bar">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input placeholder="搜索产品型号、分类名称..." readonly>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs-wrap">
+  <div class="tab active">全部目录</div>
+  <div class="tab">传动系统</div>
+  <div class="tab">液压·气动</div>
+  <div class="tab">轴承·导轨</div>
+  <div class="tab">紧固·连接</div>
+  <div class="tab">电气配线</div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <h2>机械设备电子目录库</h2>
+  <p>涵盖传动、液压、气动、轴承、紧固件等全系列工业零部件</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="hero-stat-num">12</div><div class="hero-stat-label">本目录</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">50K+</div><div class="hero-stat-label">产品型号</div></div>
+    <div class="hero-stat"><div class="hero-stat-num">2024</div><div class="hero-stat-label">持续更新</div></div>
+  </div>
+</div>
+
+<!-- Body -->
+<div class="body body-pad">
+
+  <div class="section-label" style="margin-top:4px">标准产品目录 · 5本</div>
+  <div class="catalog-list">
+
+    <div class="cat-card" onclick="window.location.href='mobile_reader.html'">
+      <div class="cat-cover cov-navy">
+        <div class="cov-label">FA</div>
+        <div class="cov-sub">标准品</div>
+        <span class="cov-badge badge-ok">2024</span>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">FA标准品综合目录</div>
+          <div class="cat-meta"><span>2024年 第12版</span><span>1,954页</span></div>
+          <div class="cat-tags"><span class="cat-tag">FA传动</span><span class="cat-tag">导轨</span><span class="cat-tag">RoHS10</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m saved">★</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card">
+      <div class="cat-cover cov-gold">
+        <div class="cov-label">ECO</div>
+        <div class="cov-sub">经济型</div>
+        <span class="cov-badge badge-hot">特惠</span>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">FA经济型零件目录</div>
+          <div class="cat-meta"><span>2023年 第5版</span><span>876页</span></div>
+          <div class="cat-tags"><span class="cat-tag">经济型</span><span class="cat-tag">高性价比</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card">
+      <div class="cat-cover cov-slate">
+        <div class="cov-label">轴承</div>
+        <div class="cov-sub">导轨手册</div>
+        <span class="cov-badge badge-new">新</span>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">轴承·直线导轨专项手册</div>
+          <div class="cat-meta"><span>2024年 第3版</span><span>642页</span></div>
+          <div class="cat-tags"><span class="cat-tag">轴承</span><span class="cat-tag">导轨</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card">
+      <div class="cat-cover cov-steel">
+        <div class="cov-label">配线</div>
+        <div class="cov-sub">电气配线</div>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">电气配线综合目录</div>
+          <div class="cat-meta"><span>2024年 第2版</span><span>480页</span></div>
+          <div class="cat-tags"><span class="cat-tag">电气</span><span class="cat-tag">配线</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card">
+      <div class="cat-cover" style="background:linear-gradient(135deg,#2c3e50,#3d5a73);width:88px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding:10px 6px">
+        <div class="cov-label">紧固</div>
+        <div class="cov-sub">螺丝螺母</div>
+        <span class="cov-badge badge-ok">2024</span>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">螺丝·螺母·紧固件目录</div>
+          <div class="cat-meta"><span>2024年 第8版</span><span>1,120页</span></div>
+          <div class="cat-tags"><span class="cat-tag">紧固件</span><span class="cat-tag">螺丝</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section-label">维修保养手册 · 2本</div>
+  <div class="catalog-list">
+
+    <div class="cat-card">
+      <div class="cat-cover cov-moss">
+        <div class="cov-label">维修</div>
+        <div class="cov-sub">保养手册</div>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">设备维修保养操作手册</div>
+          <div class="cat-meta"><span>2023年 第4版</span><span>312页</span></div>
+          <div class="cat-tags"><span class="cat-tag">维修</span><span class="cat-tag">保养</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-card">
+      <div class="cat-cover cov-brick">
+        <div class="cov-label">安全</div>
+        <div class="cov-sub">操作规范</div>
+        <span class="cov-badge badge-new">新</span>
+      </div>
+      <div class="cat-info">
+        <div>
+          <div class="cat-name">安全规范与操作指引</div>
+          <div class="cat-meta"><span>2024年 第1版</span><span>198页</span></div>
+          <div class="cat-tags"><span class="cat-tag">安全</span><span class="cat-tag">规范</span></div>
+        </div>
+        <div class="cat-footer">
+          <button class="btn-read-m">立即阅读 →</button>
+          <span class="star-m">☆</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Bottom Navigation -->
+<div class="bottom-nav">
+  <div class="bnav-item active"><div class="bnav-icon">📚</div>书架</div>
+  <div class="bnav-item"><div class="bnav-icon">🔍</div>搜索</div>
+  <!-- <div class="bnav-item bnav-badge"><div class="bnav-icon">🔔</div>通知</div> -->
+  <div class="bnav-item"><div class="bnav-icon">👤</div>我的</div>
+</div>
+
+</body>
+</html>
