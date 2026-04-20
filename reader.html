@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XXX科技 · 阅读器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f2547;--navy-mid:#1a3a6e;--navy-light:#2356a8;--gold:#c8a84b;--white:#fff;--text-1:#0d1b2e;--text-2:#4a5568;--text-3:#8fa0b5;--border:#dde3ec;--surface:#e8eaee;--pink:#ff4d8f;--pink-bg:rgba(255,77,143,0.18);--pink-border:rgba(255,77,143,0.7);--sidebar-w:52px;--header-h:52px;--bottom-h:48px;--toc-w:288px}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans SC','DM Sans',sans-serif;color:var(--text-1);background:var(--surface)}
+.shell{width:100vw;height:100vh;display:flex;flex-direction:column}
+.top-bar{height:var(--header-h);background:var(--navy);display:flex;align-items:center;padding:0 14px 0 0;flex:0 0 var(--header-h);z-index:100;border-bottom:1px solid rgba(255,255,255,.08)}
+.back-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;padding:8px 14px;border-right:1px solid rgba(255,255,255,.1);white-space:nowrap;transition:color .15s;height:100%}
+.back-btn:hover{color:#fff}
+.doc-title{font-size:13px;color:rgba(255,255,255,.9);font-weight:500;padding:0 20px}
+.top-tools{margin-left:auto;display:flex;align-items:center;gap:2px}
+.tool-btn{width:34px;height:34px;border-radius:6px;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);transition:all .15s;flex-shrink:0}
+.tool-btn:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.15)}
+.tool-btn.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.tool-btn.cmp-on{background:#8b5cf6;color:#fff;border-color:#8b5cf6}
+.tool-sep{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 6px}
+.page-jump{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.65);padding-left:10px;border-left:1px solid rgba(255,255,255,.1);margin-left:6px}
+.page-jump input{width:48px;height:28px;border:1px solid rgba(255,255,255,.25);border-radius:4px;text-align:center;font-size:12px;background:rgba(255,255,255,.08);color:#fff;outline:none;font-family:inherit}
+.page-jump input:focus{border-color:var(--gold)}
+.mid-row{display:flex;flex:1;min-height:0}
+.left-rail{width:var(--sidebar-w);background:var(--navy-mid);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px;flex:0 0 var(--sidebar-w);border-right:1px solid rgba(255,255,255,.08);z-index:50}
+.rail-item{width:40px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;border-radius:6px;cursor:pointer;color:rgba(255,255,255,.55);transition:all .15s}
+.rail-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.rail-item.toc-on{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.rail-icon{font-size:15px;line-height:1}
+.rail-label{font-size:9px;line-height:1;text-align:center;letter-spacing:.02em}
+.rail-divider{width:28px;height:1px;background:rgba(255,255,255,.12);margin:4px 0}
+.rail-badge{position:relative}
+.rail-badge::after{content:'';position:absolute;top:4px;right:2px;width:6px;height:6px;background:#e03e3e;border-radius:50%;border:1px solid var(--navy-mid)}
+.toc-panel{width:0;background:var(--white);flex:0 0 auto;overflow:hidden;transition:width .24s cubic-bezier(.4,0,.2,1);border-right:0px solid var(--border);display:flex}
+.toc-panel.open{width:var(--toc-w);border-right-width:1px}
+.toc-inner{width:var(--toc-w);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.toc-head{padding:14px 16px 12px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.toc-head-title{font-size:13px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px}
+.toc-close{width:24px;height:24px;background:rgba(255,255,255,.1);border:none;border-radius:4px;cursor:pointer;color:rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;font-size:13px;transition:background .15s}
+.toc-close:hover{background:rgba(255,255,255,.2);color:#fff}
+.toc-search{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.toc-search-wrap{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px}
+.toc-search-wrap input{border:none;background:transparent;font-size:12px;color:var(--text-1);outline:none;flex:1;font-family:inherit}
+.toc-search-wrap input::placeholder{color:var(--text-3)}
+.toc-reset{font-size:11px;color:var(--navy-light);cursor:pointer;white-space:nowrap;border:none;background:transparent;font-family:inherit}
+.toc-reset:hover{text-decoration:underline}
+.toc-list{flex:1;overflow-y:auto}
+.toc-list::-webkit-scrollbar{width:4px}
+.toc-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.toc-item{display:flex;align-items:flex-start;gap:8px;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;user-select:none}
+.toc-item:hover{background:#f7f9fc}
+.toc-item.current{background:#eef3fb;border-left:3px solid var(--navy-mid)}
+.toc-num{font-size:11px;color:var(--navy-mid);font-weight:700;min-width:22px;flex-shrink:0;padding-top:1px;font-family:'DM Sans',sans-serif}
+.toc-name{flex:1;font-size:12px;color:var(--text-1);line-height:1.55}
+.toc-item.current .toc-name{color:var(--navy-mid);font-weight:500}
+.toc-pg{font-size:11px;color:var(--text-3);flex-shrink:0;font-family:'DM Sans',sans-serif;padding-top:1px}
+.toc-item.current .toc-pg{color:var(--navy-mid)}
+.viewer{flex:1;position:relative;background:#6e737a;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.viewer::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:40px 40px}
+.prev-arrow,.next-arrow{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.93);border:1px solid rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;color:var(--navy);font-size:18px;transition:background .15s,transform .15s;box-shadow:0 2px 8px rgba(0,0,0,.2);user-select:none}
+.prev-arrow{left:16px}
+.next-arrow{right:16px}
+.prev-arrow:hover,.next-arrow:hover{background:#fff;transform:translateY(-50%) scale(1.05)}
+.prev-arrow:active,.next-arrow:active{transform:translateY(-50%) scale(.97)}
+
+.spread-wrap{display:flex;gap:4px;align-items:center}
+.spread-wrap.anim-right{animation:fromRight .26s cubic-bezier(.4,0,.2,1) both}
+.spread-wrap.anim-left{animation:fromLeft .26s cubic-bezier(.4,0,.2,1) both}
+.spread-wrap.exit-left{animation:toLeft .26s cubic-bezier(.4,0,.2,1) both}
+.spread-wrap.exit-right{animation:toRight .26s cubic-bezier(.4,0,.2,1) both}
+@keyframes fromRight{from{transform:translateX(56px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fromLeft{from{transform:translateX(-56px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toLeft{from{transform:translateX(0);opacity:1}to{transform:translateX(-56px);opacity:0}}
+@keyframes toRight{from{transform:translateX(0);opacity:1}to{transform:translateX(56px);opacity:0}}
+.page-canvas{width:500px;height:705px;background:#fff;border-radius:2px;overflow:hidden;position:relative;flex-shrink:0;box-shadow:3px 3px 16px rgba(0,0,0,.3),-1px 0 4px rgba(0,0,0,.1)}
+.page-canvas+.page-canvas{box-shadow:-3px 3px 16px rgba(0,0,0,.3),1px 0 4px rgba(0,0,0,.1)}
+.pc{padding:14px 13px;height:100%;display:flex;flex-direction:column;font-family:'Noto Sans SC',sans-serif;position:relative}
+.pc-hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid var(--navy);padding-bottom:5px;margin-bottom:10px}
+.pc-hdr-l{font-size:7.5px;font-weight:700;color:var(--navy)}
+.pc-hdr-r{font-size:7px;color:var(--text-3)}
+.pc-title{font-size:11px;font-weight:700;color:var(--navy);line-height:1.45;margin-bottom:6px}
+.pc-sub{font-size:7.5px;color:var(--text-2);margin-bottom:8px;line-height:1.6}
+.pc-img{background:#f0f4fb;border:1px dashed #b8cae0;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#8fa0b5;margin-bottom:7px}
+.pc-price{font-size:17px;font-weight:700;color:#c0392b;font-family:'DM Sans',sans-serif;margin-bottom:2px}
+.pc-price-label{font-size:7px;color:var(--text-3);margin-bottom:6px}
+.pc-specs{display:flex;gap:4px;margin-bottom:7px}
+.pc-spec{flex:1;border:1px solid var(--border);border-radius:3px;padding:3px 4px}
+.pc-spec-l{font-size:6.5px;color:var(--text-3);margin-bottom:1px}
+.pc-spec-v{font-size:8.5px;font-weight:600;color:var(--navy)}
+.pc-table{width:100%;border-collapse:collapse;font-size:7px}
+.pc-table th{background:var(--navy);color:#fff;padding:3px 4px;text-align:left;font-weight:600}
+.pc-table td{padding:2.5px 4px;border-bottom:1px solid #eef0f3;color:var(--text-1)}
+.pc-table tr:nth-child(even) td{background:#f7f9fc}
+.pc-divider{height:1px;background:var(--border);margin:7px 0}
+.pc-sec{font-size:7px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.pc-tag{display:inline-block;font-size:6px;padding:1.5px 5px;border-radius:8px;background:var(--navy);color:#fff;margin:1px 2px 1px 0}
+.pc-tag-out{background:transparent;border:1px solid var(--navy);color:var(--navy)}
+.pc-num{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:7px;color:var(--text-3);font-family:'DM Sans',sans-serif}
+.pc-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.pc-big{font-size:15px;font-weight:700;color:var(--navy);text-align:center;line-height:1.5}
+.pc-toc-row{display:flex;align-items:baseline;gap:3px;padding:3px 0;border-bottom:1px solid #f0f2f5;font-size:8px}
+.pc-toc-num{color:var(--navy);font-weight:700;min-width:16px;font-size:7px}
+.pc-toc-name{flex:1;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:7.5px}
+.pc-dots{flex:0 0 20px;border-bottom:1px dotted #ccc;margin:0 3px;align-self:center}
+.pc-toc-pg{color:var(--navy);font-weight:700;font-size:7px}
+
+/* HOTSPOT */
+.hotspot{position:absolute;border:2px dashed var(--pink-border);background:var(--pink-bg);cursor:pointer;border-radius:4px;transition:background .15s;display:flex;align-items:flex-start;justify-content:flex-end}
+.hotspot:hover{background:rgba(255,77,143,.32);border-color:var(--pink)}
+.hs-badge{font-size:7px;font-weight:700;color:#fff;background:var(--pink);border-radius:0 3px 0 4px;padding:2px 5px;line-height:1.4;white-space:nowrap}
+.hs-tip{position:absolute;bottom:calc(100% + 5px);right:0;background:var(--navy);color:#fff;font-size:10px;padding:4px 9px;border-radius:5px;white-space:nowrap;pointer-events:none;z-index:30;box-shadow:0 2px 8px rgba(0,0,0,.3);opacity:0;transition:opacity .15s}
+.hotspot:hover .hs-tip{opacity:1}
+.hs-tip::after{content:'';position:absolute;top:100%;right:10px;border:4px solid transparent;border-top-color:var(--navy)}
+
+/* HOTSPOT POPUP */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.popup-box{background:#fff;border-radius:12px;width:340px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:popIn .2s ease both}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.popup-head{background:var(--pink);padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.popup-head span{font-size:13px;font-weight:700;color:#fff}
+.popup-x{background:rgba(255,255,255,.25);border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center}
+.popup-x:hover{background:rgba(255,255,255,.4)}
+.popup-body{padding:18px}
+.popup-icon{font-size:28px;text-align:center;margin-bottom:10px}
+.popup-title{font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:6px}
+.popup-desc{font-size:12px;color:var(--text-2);line-height:1.65;margin-bottom:14px}
+.popup-actions{display:flex;gap:8px}
+.popup-btn{flex:1;padding:9px 0;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:opacity .15s}
+.popup-btn:hover{opacity:.85}
+.btn-primary{background:var(--navy-mid);color:#fff}
+.btn-secondary{background:#f0f4fb;color:var(--navy-mid)}
+
+/* COMPARE BAR */
+.cmp-bar{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);background:rgba(109,60,221,.96);color:#fff;border-radius:24px;padding:10px 20px;display:none;align-items:center;gap:12px;font-size:13px;font-weight:500;box-shadow:0 4px 20px rgba(109,60,221,.45);z-index:80}
+.cmp-bar.show{display:flex}
+.cmp-slot{background:rgba(255,255,255,.18);border:1.5px dashed rgba(255,255,255,.55);border-radius:8px;padding:4px 14px;font-size:12px;min-width:86px;text-align:center;transition:background .15s;cursor:default}
+.cmp-slot.filled{background:rgba(255,255,255,.32);border-style:solid}
+.cmp-vs{font-size:10px;font-weight:700;opacity:.65}
+.cmp-go{background:#fff;color:#5b21b6;border:none;border-radius:16px;padding:5px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.cmp-go:hover:not(:disabled){opacity:.85}
+.cmp-go:disabled{opacity:.38;cursor:not-allowed}
+.cmp-exit{background:transparent;border:none;color:rgba(255,255,255,.65);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+.cmp-exit:hover{color:#fff}
+.page-canvas.sel{outline:2.5px solid #8b5cf6}
+.page-canvas.sel .cmp-check{display:flex}
+.cmp-check{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:#7c3aed;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;z-index:20;pointer-events:none}
+
+/* COMPARE MODAL */
+.cmp-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center}
+.cmp-modal.open{display:flex}
+.cmp-box{background:#fff;border-radius:14px;width:min(860px,95vw);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:popIn .22s ease both}
+.cmp-head{background:var(--navy);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.cmp-head h2{font-size:15px;font-weight:600;color:#fff}
+.cmp-close{background:rgba(255,255,255,.12);border:none;border-radius:6px;padding:5px 14px;color:#fff;font-size:12px;cursor:pointer;font-family:inherit}
+.cmp-close:hover{background:rgba(255,255,255,.22)}
+.cmp-body{display:flex;flex:1;overflow:hidden}
+.cmp-col{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border)}
+.cmp-col:last-child{border-right:none}
+.cmp-col-head{padding:10px 16px;background:#f7f9fc;border-bottom:1px solid var(--border);font-size:12px;font-weight:600;color:var(--navy-mid)}
+.cmp-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:18px;background:#dde2e8}
+.cmp-wrap .page-canvas{width:256px;height:362px;box-shadow:2px 2px 12px rgba(0,0,0,.2)}
+.cmp-foot{background:#fffbea;border-top:1px solid #e8d86a;padding:8px 16px;font-size:11px;color:#7a6400;display:flex;align-items:center;gap:6px}
+
+/* RIGHT RAIL */
+.right-rail{width:var(--sidebar-w);background:var(--white);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;flex:0 0 var(--sidebar-w);border-left:1px solid var(--border)}
+.right-item{width:42px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;border-radius:6px;cursor:pointer;color:var(--text-3);transition:all .15s}
+.right-item:hover{background:#f0f4fb;color:var(--navy-mid)}
+.right-item.active{background:#eef3fb;color:var(--navy-mid)}
+.right-icon{font-size:16px;line-height:1}
+.right-label{font-size:9.5px;line-height:1;text-align:center}
+.right-divider{width:28px;height:1px;background:var(--border);margin:4px 0}
+.right-notif{position:relative}
+.right-notif::after{content:'';position:absolute;top:7px;right:4px;width:6px;height:6px;background:#e03e3e;border-radius:50%;border:1.5px solid var(--white)}
+
+/* BOTTOM */
+.bottom-bar{height:var(--bottom-h);background:rgba(12,22,40,.94);display:flex;align-items:center;padding:0 16px;gap:14px;flex:0 0 var(--bottom-h);border-top:1px solid rgba(255,255,255,.06)}
+.nav-btns{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.nav-btn{width:30px;height:30px;border-radius:5px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:rgba(255,255,255,.8);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:background .12s;font-family:'DM Sans',sans-serif;user-select:none}
+.nav-btn:hover{background:rgba(255,255,255,.15);color:#fff}
+.nav-btn:active{transform:scale(.95)}
+.progress-area{flex:1;display:flex;align-items:center;gap:10px}
+.progress-track{flex:1;height:4px;background:rgba(255,255,255,.15);border-radius:2px;cursor:pointer;position:relative}
+.progress-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .2s;position:relative}
+.progress-thumb{position:absolute;right:-5px;top:-4px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid rgba(255,255,255,.9)}
+.pct-label{font-size:11px;color:rgba(255,255,255,.45);min-width:32px;text-align:right;font-family:'DM Sans',sans-serif}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="top-bar">
+  <div class="back-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>书架</div>
+  <div class="doc-title">FA标准品综合目录 · 2024版</div>
+  <div class="top-tools">
+    <!-- <div class="tool-btn on" id="toc-btn" title="目录" onclick="toggleTOC()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="13" y2="18"/></svg></div> -->
+    <div class="tool-sep"></div>
+    <!-- <div class="tool-btn" id="fav-btn" title="收藏" onclick="toggleFav()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div> -->
+    <div class="tool-btn" id="cmp-btn" title="页面对比" onclick="toggleCmpMode()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="9" height="18" rx="1"/><rect x="13" y="3" width="9" height="18" rx="1"/></svg></div>
+    <div class="tool-sep"></div>
+    <div class="tool-btn" title="下载"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+    <div class="tool-btn" title="打印"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div>
+    <div class="tool-sep"></div>
+    <div class="page-jump">第<input id="page-input" value="1" onchange="jumpTo(+this.value)">页 / <b style="color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif">1954</b></div>
+  </div>
+</div>
+<div class="mid-row">
+  <div class="left-rail">
+    <div class="rail-item toc-on" id="rail-toc" title="分类一览" onclick="toggleTOC()">
+      <div class="rail-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="13" y2="18"/></svg></div>
+      <div class="rail-label">目录</div>
+    </div>
+    <div class="rail-divider"></div>
+    <div class="rail-item" onclick="toggleFav()"><div class="rail-icon">⭐</div><div class="rail-label">收藏</div></div>
+    <div class="rail-item"><div class="rail-icon">📚</div><div class="rail-label">书架</div></div>
+    <div class="rail-divider"></div>
+    <div class="rail-item"><div class="rail-icon">📖</div><div class="rail-label">教程</div></div>
+    <div class="rail-item rail-badge"><div class="rail-icon">🆕</div><div class="rail-label">新品</div></div>
+    <!-- <div class="rail-item"><div class="rail-icon">🔧</div><div class="rail-label">计算</div></div> -->
+    <div class="rail-divider"></div>
+    <div class="rail-item"><div class="rail-icon">💬</div><div class="rail-label">客服</div></div>
+    <!-- <div class="rail-item"><div class="rail-icon">🔔</div><div class="rail-label">停售</div></div> -->
+  </div>
+  <div class="toc-panel open" id="toc-panel">
+    <div class="toc-inner">
+      <div class="toc-head">
+        <div class="toc-head-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="16" y2="12"/><line x1="3" y1="18" x2="13" y2="18"/></svg>分类一览</div>
+        <button class="toc-close" onclick="toggleTOC()">✕</button>
+      </div>
+      <div class="toc-search">
+        <div class="toc-search-wrap">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8fa0b5" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="toc-q" placeholder="请输入搜索关键字" oninput="filterTOC(this.value)">
+          <button class="toc-reset" onclick="resetTOC()">重置</button>
+        </div>
+      </div>
+      <div class="toc-list" id="toc-list"></div>
+    </div>
+  </div>
+  <div class="viewer" id="viewer">
+    <div class="prev-arrow" onclick="prevPage()">&#8249;</div>
+    <div id="spread-container"></div>
+    <div class="next-arrow" onclick="nextPage()">&#8250;</div>
+  </div>
+  <!-- <div class="right-rail">
+    <div class="right-item active"><div class="right-icon">📚</div><div class="right-label">书架</div></div>
+    <div class="right-divider"></div>
+    <div class="right-item"><div class="right-icon">⭐</div><div class="right-label">收藏</div></div>
+    <div class="right-item"><div class="right-icon">📖</div><div class="right-label">教程</div></div>
+    <div class="right-divider"></div>
+    <div class="right-item right-notif"><div class="right-icon">🆕</div><div class="right-label">新品</div></div>
+    <div class="right-item"><div class="right-icon">🔧</div><div class="right-label">计算</div></div>
+    <div class="right-divider"></div>
+    <div class="right-item"><div class="right-icon">💬</div><div class="right-label">客服</div></div>
+    <div class="right-item"><div class="right-icon">🔔</div><div class="right-label">停售</div></div>
+  </div> -->
+</div>
+<div class="bottom-bar">
+  <div class="nav-btns">
+    <div class="nav-btn" onclick="firstPage()">|‹</div>
+    <div class="nav-btn" onclick="prevPage()">‹</div>
+    <div class="nav-btn" onclick="nextPage()">›</div>
+    <div class="nav-btn" onclick="lastPage()">›|</div>
+  </div>
+  <div class="progress-area">
+    <div class="progress-track" id="progress-track" onclick="seekBar(event)">
+      <div class="progress-fill" id="progress-fill" style="width:.05%"><div class="progress-thumb"></div></div>
+    </div>
+    <div class="pct-label" id="pct-label">0%</div>
+  </div>
+</div>
+</div>
+
+<!-- HOTSPOT POPUP -->
+<div class="overlay" id="hs-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="popup-box">
+    <div class="popup-head" id="hs-popup-head"><span id="hs-popup-type">热区跳转</span><button class="popup-x" onclick="document.getElementById('hs-overlay').classList.remove('open')">✕</button></div>
+    <div class="popup-body">
+      <div class="popup-icon" id="hs-icon"></div>
+      <div class="popup-title" id="hs-title"></div>
+      <div class="popup-desc" id="hs-desc"></div>
+      <div class="popup-actions">
+        <button class="popup-btn btn-secondary" onclick="document.getElementById('hs-overlay').classList.remove('open')">取消</button>
+        <button class="popup-btn btn-primary" id="hs-action-btn">确认跳转</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARE FLOATING BAR -->
+<div class="cmp-bar" id="cmp-bar">
+  <span style="font-size:11px;opacity:.8">对比模式 · 点击页面选择：</span>
+  <div class="cmp-slot" id="cmp-slot-a">第 <span id="cmp-a">—</span> 页</div>
+  <span class="cmp-vs">VS</span>
+  <div class="cmp-slot" id="cmp-slot-b">第 <span id="cmp-b">—</span> 页</div>
+  <button class="cmp-go" id="cmp-go" disabled onclick="openCmpModal()">查看对比</button>
+  <button class="cmp-exit" onclick="exitCmpMode()" title="退出对比">✕</button>
+</div>
+
+<!-- COMPARE MODAL -->
+<div class="cmp-modal" id="cmp-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="cmp-box">
+    <div class="cmp-head">
+      <h2>📋 页面对比</h2>
+      <button class="cmp-close" onclick="document.getElementById('cmp-modal').classList.remove('open')">关闭对比</button>
+    </div>
+    <div class="cmp-body">
+      <div class="cmp-col">
+        <div class="cmp-col-head" id="cmp-head-a">第 — 页</div>
+        <div class="cmp-wrap" id="cmp-wrap-a"></div>
+        <div class="cmp-foot" id="cmp-foot-a">章节：—</div>
+      </div>
+      <div class="cmp-col">
+        <div class="cmp-col-head" id="cmp-head-b">第 — 页</div>
+        <div class="cmp-wrap" id="cmp-wrap-b"></div>
+        <div class="cmp-foot" id="cmp-foot-b">章节：—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TOTAL=1954;
+let cur=1,tocOpen=true,favOn=false,animating=false,cmpMode=false,cmpPages=[];
+const tocData=[
+  {n:"1.",name:"直线电机模组·铁制模组·铝合金模组·电缸",pg:35,next:261},
+  {n:"2.",name:"电动夹爪",pg:261,next:275},
+  {n:"3.",name:"滚珠丝杆·梯形丝杆",pg:275,next:375},
+  {n:"4.",name:"直线导轨·导向轴·直线轴承·滚珠花键·衬套",pg:375,next:575},
+  {n:"5.",name:"拖链·电缆·热缩管·风扇·网络通信",pg:575,next:625},
+  {n:"6.",name:"马达/联轴器/转轴",pg:625,next:677},
+  {n:"7.",name:"同步带轮·惰轮·同步带·圆皮带用滑轮·圆皮带",pg:677,next:785},
+  {n:"8.",name:"链轮·链条·齿轮·齿条",pg:785,next:833},
+  {n:"9.",name:"轴承·轴承座·轴承用小零件",pg:833,next:945},
+  {n:"10.",name:"铰链销·悬臂销",pg:945,next:975},
+  {n:"11.",name:"输送机·平皮带·滚轮·凸轮随动器",pg:975,next:1107},
+  {n:"12.",name:"定位·位置调整·滑台",pg:1107,next:1257},
+  {n:"13.",name:"柱塞·肘来",pg:1257,next:1295},
+  {n:"14.",name:"弹簧·橡胶缓冲器·气弹簧",pg:1295,next:1355},
+  {n:"15.",name:"螺丝·螺母·垫圈·销",pg:1355,next:1520},
+  {n:"16.",name:"液压·气动元件",pg:1520,next:1680},
+  {n:"17.",name:"型材·框架·铝型材附件",pg:1680,next:1820},
+  {n:"18.",name:"安全防护·工具·耗材",pg:1820,next:TOTAL+1}
+];
+const hotspots={
+  // 1:[{t:'22%',l:'18%',w:'64%',h:'12%',label:'进入产品目录',tip:'跳转至第35页',icon:'📖',title:'产品分类目录',desc:'',type:'page',target:35}],
+  3:[{t:'9%',l:'5%',w:'15%',h:'2.5%',label:'',tip:'',icon:'📖',title:'直线电机模组',desc:'查看全部18个产品大类，快速定位所需章节。',type:'page',target:35},
+    {t:'11.5%',l:'5%',w:'15%',h:'2.5%',label:'',tip:'',icon:'📖',title:'直线电机模组',desc:'查看全部18个产品大类，快速定位所需章节。',type:'page',target:261},
+    {t:'14%',l:'5%',w:'15%',h:'2.5%',label:'',tip:'',icon:'📖',title:'直线电机模组',desc:'查看全部18个产品大类，快速定位所需章节。',type:'page',target:275},
+    {t:'16.5%',l:'5%',w:'15%',h:'2.5%',label:'',tip:'',icon:'📖',title:'直线电机模组',desc:'查看全部18个产品大类，快速定位所需章节。',type:'page',target:375}
+  ],
+  375:[
+    {t:'14%',l:'8%',w:'58%',h:'15%',label:'价格详情',tip:'查看完整价格表',icon:'💰',title:'直线导轨价格及折扣详情',desc:'C-HLGHA 系列完整价格阶梯表，含数量折扣与交期说明。',type:'page',target:376},
+    {t:'52%',l:'8%',w:'84%',h:'24%',label:'规格参数表',tip:'查看详细规格',icon:'📐',title:'产品规格参数表',desc:'包含 W·H·N·重量等完整尺寸参数，共收录4种规格型号。',type:'page',target:377},
+    {t:'82%',l:'8%',w:'55%',h:'10%',label:'在线下单',tip:'跳转至官网',icon:'🛒',title:'前往在线订购',desc:'将跳转至产品订购页面（外部链接），继续操作需要离开当前阅读器。',type:'url',url:'https://www.misumi.com.cn'}
+  ],
+  833:[
+    {t:'12%',l:'8%',w:'84%',h:'20%',label:'规格索引',tip:'查看轴承规格索引',icon:'📋',title:'深沟球轴承规格索引',desc:'6200系列完整型号规格表，含内径·外径·宽度·基本额定负荷等参数。',type:'page',target:835},
+    {t:'55%',l:'8%',w:'84%',h:'24%',label:'材质说明',tip:'查看材质对比',icon:'⚙️',title:'材质与密封方式说明',desc:'GCr15 轴承钢与不锈钢材质特性对比，密封方式选型指南。',type:'page',target:840}
+  ]
+};
+
+function getContent(pg){
+  if(pg===1)return`<div class="pc-hdr"><span class="pc-hdr-l">XXX科技 MECHCO</span><span class="pc-hdr-r">封面</span></div><div class="pc-center"><div style="width:50px;height:50px;background:#0f2547;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;font-weight:800;font-family:'DM Sans',sans-serif">FA</div><div class="pc-big">FA标准品<br>综合目录</div><div style="font-size:8px;color:#8fa0b5">2024年 第12版 · 1,954页</div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:4px"><span class="pc-tag">RoHS10</span><span class="pc-tag pc-tag-out">FA工厂直供</span><span class="pc-tag pc-tag-out">CAD联动</span></div></div><div style="font-size:6.5px;color:#ccc;text-align:center;border-top:1px solid #eee;padding-top:6px;margin-top:auto">机械设备专业零部件全品类综合手册</div>`;
+  if(pg<=34)return`<div class="pc-hdr"><span class="pc-hdr-l">目录 INDEX</span><span class="pc-hdr-r">P.${pg}</span></div><div style="font-size:9px;font-weight:700;color:#1a3a6e;margin-bottom:8px">产品分类总目录</div>${tocData.slice(0,10).map(t=>`<div class="pc-toc-row"><span class="pc-toc-num">${t.n}</span><span class="pc-toc-name">${t.name.split('·')[0]}</span><span class="pc-dots"></span><span class="pc-toc-pg">P.${t.pg}</span></div>`).join('')}`;
+  if(pg>=375&&pg<575)return`<div class="pc-hdr"><span class="pc-hdr-l">直线导轨 · Linear Guide</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-title">经济型 高组装直线导轨 滑块加长型</div><div style="font-size:7.5px;color:#8fa0b5;margin-bottom:7px">代表型号：C-HLGHA20~280</div><div class="pc-price">116.22</div><div class="pc-price-label">元 / 个起 · 大订单最低 76.17元</div><div class="pc-specs"><div class="pc-spec"><div class="pc-spec-l">型号</div><div class="pc-spec-v">C-HLGHA</div></div><div class="pc-spec"><div class="pc-spec-l">规格</div><div class="pc-spec-v">20~45</div></div><div class="pc-spec"><div class="pc-spec-l">长度L</div><div class="pc-spec-v">160~3960</div></div></div><div class="pc-img" style="height:60px">[ 产品工程图 ]</div><table class="pc-table"><tr><th>规格</th><th>W</th><th>H</th><th>N</th><th>重量kg</th></tr><tr><td>20</td><td>44</td><td>30</td><td>12</td><td>2.21</td></tr><tr><td>25</td><td>53</td><td>40</td><td>12.5</td><td>3.21</td></tr><tr><td>30</td><td>60</td><td>45</td><td>16</td><td>4.47</td></tr><tr><td>35</td><td>70</td><td>55</td><td>18</td><td>5.92</td></tr></table>`;
+  if(pg>=833&&pg<945)return`<div class="pc-hdr"><span class="pc-hdr-l">轴承 · Bearing</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-title">深沟球轴承 标准型 6200系列</div><div class="pc-sub">适用于低噪音·高转速·精密定位场景</div><div class="pc-specs"><div class="pc-spec"><div class="pc-spec-l">内径 d</div><div class="pc-spec-v">10~200mm</div></div><div class="pc-spec"><div class="pc-spec-l">精度</div><div class="pc-spec-v">P0/P5/P6</div></div></div><div class="pc-img" style="height:55px">[ 轴承截面结构图 ]</div><div class="pc-sec">基本额定负荷参数</div><table class="pc-table"><tr><th>型号</th><th>d</th><th>D</th><th>B</th><th>Cr(kN)</th></tr><tr><td>6200</td><td>10</td><td>30</td><td>9</td><td>5.1</td></tr><tr><td>6204</td><td>20</td><td>47</td><td>14</td><td>12.8</td></tr><tr><td>6208</td><td>40</td><td>80</td><td>18</td><td>29.5</td></tr></table><div class="pc-divider"></div><div style="display:flex;gap:3px;flex-wrap:wrap"><span class="pc-tag">GCr15钢</span><span class="pc-tag pc-tag-out">ZZ双面钢盖</span><span class="pc-tag pc-tag-out">2RS橡胶密封</span></div>`;
+  if(pg>=785&&pg<833)return`<div class="pc-hdr"><span class="pc-hdr-l">齿轮·齿条 · Gear & Rack</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-title">标准直齿轮 S型 · 模数 0.5~8</div><div class="pc-specs"><div class="pc-spec"><div class="pc-spec-l">压力角</div><div class="pc-spec-v">20°</div></div><div class="pc-spec"><div class="pc-spec-l">材质</div><div class="pc-spec-v">S45C</div></div><div class="pc-spec"><div class="pc-spec-l">精度</div><div class="pc-spec-v">JIS 6级</div></div></div><div class="pc-img" style="height:52px;font-size:28px;color:#c8d4e6">⚙</div><table class="pc-table"><tr><th>模数</th><th>齿数Z</th><th>外径</th><th>重量g</th></tr><tr><td>1</td><td>20</td><td>22</td><td>18</td></tr><tr><td>2</td><td>20</td><td>44</td><td>95</td></tr><tr><td>3</td><td>20</td><td>66</td><td>310</td></tr><tr><td>4</td><td>20</td><td>88</td><td>730</td></tr></table>`;
+  if(pg>=1295&&pg<1355)return`<div class="pc-hdr"><span class="pc-hdr-l">弹簧·缓冲器 · Spring</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-title">压缩弹簧 精密型 SWP系列</div><div class="pc-sub">适用于自动化设备、模具夹具等精密机械场合。</div><div class="pc-divider"></div><div class="pc-sec">产品规格一览</div><table class="pc-table"><tr><th>型号</th><th>外径</th><th>线径</th><th>自由长</th><th>弹簧常数</th></tr><tr><td>SWP10</td><td>10</td><td>1.2</td><td>30</td><td>1.8N/mm</td></tr><tr><td>SWP16</td><td>16</td><td>1.8</td><td>40</td><td>3.5N/mm</td></tr><tr><td>SWP20</td><td>20</td><td>2.5</td><td>50</td><td>7.2N/mm</td></tr></table>`;
+  const ch=tocData.find(t=>pg>=t.pg&&pg<t.next);
+  if(ch)return`<div class="pc-hdr"><span class="pc-hdr-l">${ch.name.split('·')[0]}</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-title" style="margin-top:8px">${ch.name}</div><div class="pc-sub" style="margin-top:6px">本章收录该分类下全系列标准品，涵盖各型号规格参数、尺寸数据及选型说明。</div><div class="pc-divider"></div><div class="pc-sec">产品子分类索引</div><div style="margin-top:5px">${['标准型','精密型','经济型','重载型','特殊用途'].map(t=>`<div style="font-size:8px;padding:4px 0;border-bottom:1px solid #f0f2f5;color:#333">· ${t}</div>`).join('')}</div><div class="pc-img" style="height:52px;margin-top:8px">[ 产品实物图 ]</div>`;
+  return`<div class="pc-hdr"><span class="pc-hdr-l">XXX科技</span><span class="pc-hdr-r">P.${pg}</span></div><div class="pc-center"><div class="pc-big" style="opacity:.25">⚙</div></div>`;
+}
+
+function addHotspots(canvas,pg){
+  (hotspots[pg]||[]).forEach(s=>{
+    const el=document.createElement('div');
+    el.className='hotspot';
+    el.style.cssText=`top:${s.t};left:${s.l};width:${s.w};height:${s.h}`;
+    el.innerHTML=`<span class="hs-badge">${s.label}</span><div class="hs-tip">${s.tip}</div>`;
+    el.onclick=(e)=>{e.stopPropagation();
+      // openHsPopup(s)
+      jumpTo(s.target)
+
+    };
+    canvas.appendChild(el);
+  });
+}
+
+function makePage(pg,forCmp){
+  const d=document.createElement('div');
+  d.className='page-canvas';d.dataset.pg=pg;
+  d.innerHTML=`<div class="pc">${getContent(pg)}</div><div class="pc-num">${pg}</div><div class="cmp-check">✓</div>`;
+  if(!forCmp){
+    addHotspots(d,pg);
+    if(cmpMode){
+      d.style.cursor='pointer';
+      d.addEventListener('click',()=>selectCmp(pg,d));
+      if(cmpPages.includes(pg))d.classList.add('sel');
+    }
+  }
+  return d;
+}
+
+function makeSpread(pg){
+  const w=document.createElement('div');w.className='spread-wrap';
+  w.appendChild(makePage(pg));
+  if(pg>1&&pg+1<=TOTAL)w.appendChild(makePage(pg+1));
+  return w;
+}
+
+function render(newPg,dir){
+  if(animating)return;animating=true;
+  const c=document.getElementById('spread-container'),old=c.querySelector('.spread-wrap');
+  if(old){old.classList.add(dir>0?'exit-left':'exit-right'); old.remove()}
+  cur=newPg;
+  const neo=makeSpread(cur);neo.classList.add(dir>0?'anim-right':'anim-left');
+  c.appendChild(neo);setTimeout(()=>{animating=false},260);updateUI();
+}
+
+function updateUI(){
+  document.getElementById('page-input').value=cur;
+  const pct=Math.round((cur-1)/(TOTAL-1)*100);
+  document.getElementById('progress-fill').style.width=Math.max(.05,pct)+'%';
+  document.getElementById('pct-label').textContent=pct+'%';
+  document.querySelectorAll('.toc-item').forEach(el=>{const a=tocData.slice().reverse().find(t=>cur>=t.pg);el.classList.toggle('current',a&&+el.dataset.pg===a.pg)});
+}
+
+function prevPage(){if(cur>1)render(Math.max(1,cur-2),-1)}
+function nextPage(){if(cur<TOTAL)render(Math.min(TOTAL-1,cur+2),1)}
+function firstPage(){if(cur!==1)render(1,-1)}
+function lastPage(){if(cur<TOTAL-1)render(TOTAL-1,1)}
+function jumpTo(pg){pg=Math.max(1,Math.min(TOTAL,pg||1));render(pg,pg>=cur?1:-1)}
+function seekBar(e){const r=document.getElementById('progress-track').getBoundingClientRect();jumpTo(Math.round(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*(TOTAL-1)+1))}
+function toggleTOC(){tocOpen=!tocOpen;document.getElementById('toc-panel').classList.toggle('open',tocOpen);document.getElementById('toc-btn').classList.toggle('on',tocOpen);document.getElementById('rail-toc').classList.toggle('toc-on',tocOpen)}
+function toggleFav(){favOn=!favOn;document.getElementById('fav-btn').classList.toggle('on',favOn)}
+
+function openHsPopup(s){
+  document.getElementById('hs-popup-type').textContent=s.type==='page'?'页面跳转':'外部链接';
+  document.getElementById('hs-overlay').querySelector('.popup-head').style.background=s.type==='url'?'#0f2547':'#ff4d8f';
+  document.getElementById('hs-icon').textContent=s.icon;
+  document.getElementById('hs-title').textContent=s.title;
+  document.getElementById('hs-desc').textContent=s.desc;
+  const btn=document.getElementById('hs-action-btn');
+  btn.textContent=s.type==='page'?'跳转至第'+s.target+'页':'前往外部链接';
+  btn.onclick=()=>{document.getElementById('hs-overlay').classList.remove('open');s.type==='page'?jumpTo(s.target):window.open(s.url,'_blank')};
+  document.getElementById('hs-overlay').classList.add('open');
+}
+
+function toggleCmpMode(){
+  cmpMode=!cmpMode;document.getElementById('cmp-btn').classList.toggle('cmp-on',cmpMode);
+  if(cmpMode){cmpPages=[];document.getElementById('cmp-bar').classList.add('show');render(cur,0)}
+  else exitCmpMode();
+}
+function exitCmpMode(){cmpMode=false;cmpPages=[];document.getElementById('cmp-btn').classList.remove('cmp-on');document.getElementById('cmp-bar').classList.remove('show');render(cur,0)}
+
+function selectCmp(pg,el){
+  if(cmpPages.includes(pg)){cmpPages=cmpPages.filter(p=>p!==pg);el.classList.remove('sel')}
+  else if(cmpPages.length<2){cmpPages.push(pg);el.classList.add('sel')}
+  document.getElementById('cmp-a').textContent=cmpPages[0]||'—';
+  document.getElementById('cmp-b').textContent=cmpPages[1]||'—';
+  document.getElementById('cmp-slot-a').classList.toggle('filled',!!cmpPages[0]);
+  document.getElementById('cmp-slot-b').classList.toggle('filled',!!cmpPages[1]);
+  document.getElementById('cmp-go').disabled=cmpPages.length<2;
+}
+
+function openCmpModal(){
+  if(cmpPages.length<2)return;
+  const[a,b]=cmpPages;
+  document.getElementById('cmp-head-a').textContent='第 '+a+' 页';
+  document.getElementById('cmp-head-b').textContent='第 '+b+' 页';
+  const wa=document.getElementById('cmp-wrap-a'),wb=document.getElementById('cmp-wrap-b');
+  wa.innerHTML='';wb.innerHTML='';wa.appendChild(makePage(a,true));wb.appendChild(makePage(b,true));
+  const getChapter=p=>{const c=tocData.slice().reverse().find(t=>p>=t.pg);return c?c.name.split('·')[0]:'封面/目录'};
+  document.getElementById('cmp-foot-a').textContent='📂 章节：'+getChapter(a);
+  document.getElementById('cmp-foot-b').textContent='📂 章节：'+getChapter(b);
+  document.getElementById('cmp-modal').classList.add('open');
+}
+
+function buildTOC(q){
+  const list=document.getElementById('toc-list');list.innerHTML='';
+  const f=(q||'').trim().toLowerCase();
+  tocData.forEach(t=>{
+    if(f&&!t.name.toLowerCase().includes(f)&&!t.n.includes(f))return;
+    const d=document.createElement('div');d.className='toc-item'+(cur>=t.pg&&cur<t.next?' current':'');d.dataset.pg=t.pg;
+    const hl=f?t.name.replace(new RegExp(f,'gi'),m=>`<mark style="background:#fff3c4;border-radius:2px;padding:0 1px">${m}</mark>`):t.name;
+    d.innerHTML=`<span class="toc-num">${t.n}</span><span class="toc-name">${hl}</span><span class="toc-pg">P.${t.pg}</span>`;
+    d.onclick=()=>render(t.pg,t.pg>=cur?1:-1);list.appendChild(d);
+  });
+}
+function filterTOC(v){buildTOC(v)}
+function resetTOC(){document.getElementById('toc-q').value='';buildTOC('')}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')nextPage();
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevPage();
+  if(e.key==='Home')firstPage();if(e.key==='End')lastPage();
+  if(e.key==='Escape'){document.getElementById('hs-overlay').classList.remove('open');document.getElementById('cmp-modal').classList.remove('open');if(cmpMode)exitCmpMode()}
+});
+buildTOC();
+document.getElementById('spread-container').appendChild(makeSpread(1));
+updateUI();
+</script>
+</body>
+</html>
